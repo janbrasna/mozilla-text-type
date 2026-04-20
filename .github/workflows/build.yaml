@@ -9,7 +9,8 @@ on:
     tags:
       - '*'
 
-permissions: write-all
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -21,10 +22,13 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: "3.11"
-    - name: Setup fontspector
-      uses: fonttools/setup-fontspector@main
+    - name: Download fontspector
+    # uses: fonttools/setup-fontspector@main  # 3rdparty action not allowed; downloading manually:
       env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        FONTSPECTOR: 1.5.2
+      run: |
+        curl -sSL "https://github.com/fonttools/fontspector/releases/download/fontspector-v$FONTSPECTOR/fontspector-v$FONTSPECTOR-x86_64-unknown-linux-gnu.tar.gz" | tar -xz --strip-components=1 --directory ~/.cargo/bin/
+        fontspector --list-checks
     - name: Install toolset
       run: |
         sudo apt-get update
@@ -106,6 +110,8 @@ jobs:
     if: ${{ github.ref_type == 'tag' }}
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       ZIP_NAME: ${{ needs.build.outputs.zip_name }}
       GH_TOKEN: ${{ github.token }}
